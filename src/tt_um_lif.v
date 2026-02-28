@@ -17,11 +17,12 @@ module tt_um_lif (
 );
 
   // All output pins must be assigned. If not used, assign to 0.
-  assign uio_out[6:0] = 0;
-  assign uio_oe  = 1;
+  assign uio_oe  = 8'h80; // Only bit 7 is an output (spike)
 
   // List all unused inputs to prevent warnings
   wire _unused = &{ena, uio_in, 1'b0};
+
+  wire spike_signal;
 
  // instantiate the lif neuron
  lif lif_inst1 (
@@ -29,6 +30,9 @@ module tt_um_lif (
     .clk(clk),
     .rst_n(rst_n),
     .state(uo_out),
-    .spike(uio_out)
+    .spike(spike_signal)
  ); 
+
+  assign uio_out = {spike_signal, 7'b0}; // Bit 7 is spike, bits 6:0 are 0
+
 endmodule

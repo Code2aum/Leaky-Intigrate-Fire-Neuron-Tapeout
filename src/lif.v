@@ -2,30 +2,29 @@
 
 module lif (
     input  wire [7:0] current,   // input current
-    input  wire       clk,       // IOs: Input path   
+    input  wire       clk,       // clock
     input  wire       rst_n,     // reset_n - low to reset
-    output reg [7:0]  state,     // Dedicated outputs
-    output wire       spike,     // IOs: Output path
+    output reg [7:0]  state,     // membrane potential output
+    output wire       spike      // spike output (no trailing comma)
 );
 
-    wire[7:0] next_state;
-    reg [7:0]  threshold;
+    localparam [7:0] THRESHOLD = 8'd200;
 
+    wire [7:0] next_state;
+
+    // next state: decay (leak) + integrate incoming current
+    assign next_state = (state >> 1) + current;
+
+    // spike fires when potential crosses threshold
+    assign spike = (next_state >= THRESHOLD);
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            state <= 0;
-            threshold <= 200;
+            state <= 8'd0;
         end else begin
-            state <= next_state;
+            // reset membrane to 0 on spike, otherwise integrate
+            state <= spike ? 8'd0 : next_state;
         end
     end
-
-    // next state logic 
-    assign next_state = (state >> 1) + current;
-    // spike logic
-    assign spike = (next_state >= threshold);
-    // // reset logic
-    // assign state = (spike) ? 0 : next_state;
 
 endmodule
